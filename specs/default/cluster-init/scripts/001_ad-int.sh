@@ -22,11 +22,11 @@ update-crypto-policies --set DEFAULT:AD-SUPPORT
 #if you are using key based auth then no changed need. however in this scenario, home dir are created after the user login.
 sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
 #Disabling stricthostkey checking - useful in hpc env.
-cat <<EOF >/etc/ssh/ssh_config
-Host *
-StrictHostKeyChecking no
-UserKnownHostsFile /dev/null
-EOF
+#cat <<EOF >/etc/ssh/ssh_config
+#Host *
+#StrictHostKeyChecking no
+#UserKnownHostsFile /dev/null
+#EOF
 
 #checking for AD availability
 nmap -p 389 $AD_SERVER_IP | grep open
