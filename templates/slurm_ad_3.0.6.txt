@@ -47,6 +47,7 @@ Autoscale = $Autoscale
         adauth.ad_server_ip=$ad_server_ip
         adauth.ad_admin_user=$ad_admin_user
         adauth.ad_admin_password=$ad_admin_passwd
+        adauth.ad_ou=$ad_ou
 
         # Disable ip-XXXXXXXX hostname generation
         cyclecloud.hosts.standalone_dns.enabled = ${NodeNameIsHostname==false}
@@ -414,6 +415,11 @@ Order = 10
         Description = Password for user with rights to join computer to the domain.
         DefaultValue = "mypassword@1234"
         Required = True
+
+        [[parameter ad_ou]]
+        Label = AD OU
+        Description = (optional) OU to place computer objects in
+        DefaultValue = ""
 
 
     [[parameters High Availability]]

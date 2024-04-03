@@ -7,6 +7,7 @@
 AD_SERVER=$(jetpack config adauth.ad_server)
 AD_SERVER_IP=$(jetpack config adauth.ad_server_ip)
 AD_DOMAIN=$AD_SERVER
+AD_OU=$(jetpack config adauth.ad_ou)
 ADMIN_NAME=$(jetpack config adauth.ad_admin_user)
 ADMIN_PASSWORD=$(jetpack config adauth.ad_admin_password)
 
@@ -42,7 +43,7 @@ max_retry=3
 
 while true; do
 logger -s "Domain join on $AD_DOMAIN"
-echo $ADMIN_PASSWORD| realm join -U $ADMIN_NAME $AD_DOMAIN
+echo $ADMIN_PASSWORD| realm join ${AD_OU:+--computer-ou} $AD_OU -U $ADMIN_NAME $AD_DOMAIN
 
 if [ ! -f "/etc/sssd/sssd.conf" ]; then
     if [[ $n -le $max_retry ]]; then
