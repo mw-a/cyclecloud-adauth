@@ -43,8 +43,7 @@ Autoscale = $Autoscale
         slurm.disable_pmc = $configuration_slurm_disable_pmc
 
         #AD server info
-        adauth.ad_server=$ad_server
-        adauth.ad_server_ip=$ad_server_ip
+        adauth.ad_domain=$ad_domain
         adauth.ad_admin_user=$ad_admin_user
         adauth.ad_admin_password=$ad_admin_passwd
         adauth.ad_ou=$ad_ou
@@ -391,16 +390,10 @@ Order = 10
         ParameterType = Azure.Subnet
         Required = True
 [parameters Active Directory]
-        [[parameter ad_server]]
-        Label = FQDN of Active Directory server
-        Description = FQDN of AD server (eg: adserver.hpc.local).
-        DefaultValue = adserver.hpc.local
-        Required = True
-
-        [[parameter ad_server_ip]]
-        Label = IP of Active Directory server
-        Description = IP Address of AD server
-        DefaultValue = 1.0.0.1
+        [[parameter ad_domain]]
+        Label = Domain name
+        Description = Name of AD domain (eg: hpc.local).
+        DefaultValue = hpc.local
         Required = True
 
         [[parameter ad_admin_user]]

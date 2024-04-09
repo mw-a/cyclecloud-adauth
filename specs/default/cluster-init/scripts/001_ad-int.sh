@@ -4,19 +4,18 @@
 #OS Tested : CentOS 7 / RHEL7 / Alma Linux 8 / Ubuntu 18.04
 #Env - Azure CycleCloud
 #define variables for AD
-AD_SERVER=$(jetpack config adauth.ad_server)
-AD_SERVER_IP=$(jetpack config adauth.ad_server_ip)
-AD_DOMAIN=$AD_SERVER
+AD_DOMAIN=$(jetpack config adauth.ad_domain)
+#AD_SERVER_IP=$(jetpack config adauth.ad_server_ip)
 AD_OU=$(jetpack config adauth.ad_ou)
 ADMIN_NAME=$(jetpack config adauth.ad_admin_user)
 ADMIN_PASSWORD=$(jetpack config adauth.ad_admin_password)
 
 #removing AD server IP incase used in standalone DNS
-sed -i "/$AD_SERVER_IP/d" /etc/hosts
+#sed -i "/$AD_SERVER_IP/d" /etc/hosts
 
 #Update the nameserver and host file - for resolving AD server and AD has its own DNS
-echo "nameserver ${AD_SERVER}" >> /etc/resolv.conf
-echo "${AD_SERVER_IP} ${AD_SERVER}" >> /etc/hosts
+#echo "nameserver ${AD_SERVER_IP}" >> /etc/resolv.conf
+#echo "${AD_SERVER_IP} ${AD_DOMAIN}" >> /etc/hosts
 update-crypto-policies --set DEFAULT:AD-SUPPORT
 
 #SSH configuration - enabling Password based authentication for login with password
@@ -30,11 +29,11 @@ sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_
 #EOF
 
 #checking for AD availability
-nmap -p 389 $AD_SERVER_IP | grep open
-if [ $? -ne 0 ]; then
-    echo "AD is not reachable - please check your network settings"
-    exit 1
-fi
+#nmap -p 389 $AD_SERVER_IP | grep open
+#if [ $? -ne 0 ]; then
+#    echo "AD is not reachable - please check your network settings"
+#    exit 1
+#fi
 
 #AD integration starts from here.
 delay=15
