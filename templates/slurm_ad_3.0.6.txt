@@ -48,6 +48,9 @@ Autoscale = $Autoscale
         adauth.ad_admin_password=$ad_admin_passwd
         adauth.ad_ou=$ad_ou
 
+        dns.servers=$dns_servers
+        dns.search_list=$dns_search_list
+
         # Disable ip-XXXXXXXX hostname generation
         cyclecloud.hosts.standalone_dns.enabled = ${NodeNameIsHostname==false}
         cyclecloud.hosts.simple_vpc_dns.enabled = ${NodeNameIsHostname==false}
@@ -424,6 +427,17 @@ Order = 10
         DefaultValue = false
         ParameterType = Boolean
 
+
+[parameters DNS]
+        [[parameter dns_servers]]
+        Label = DNS servers
+        Description = comma-separated DNS servers list
+        DefaultValue = ""
+
+        [[parameter dns_search_list]]
+        Label = Search list
+        Description = comma-separated DNS search list
+        DefaultValue = ""
 
 [parameters Network Attached Storage]
 Order = 15
