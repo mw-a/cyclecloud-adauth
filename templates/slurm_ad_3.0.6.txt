@@ -736,7 +736,8 @@ Order = 20
 
         [[[parameter EnableTerminateNotification]]]
         Label = Enable Termination notifications
-        DefaultValue = False        
+        DefaultValue = True
+        ParameterType = Boolean
 
         [[[parameter additional_slurm_config]]]
         Label = Slurm Configuration
