@@ -1,0 +1,710 @@
+
+################################
+## Cluster Configuration File ##
+################################
+
+[cluster OnDemandAD]
+FormLayout = selectionpanel
+Category = Application
+IconUrl = "https://raw.githubusercontent.com/OSC/openondemand.org/gh-pages/assets/images/ood_logo_stack_rgb.png"
+
+Autoscale = false
+
+    [[node defaults]]
+    UsePublicNetwork = True
+    Credentials = $Credentials    
+    ImageName = $ImageName
+    SubnetId = $SubnetId
+    Region = $Region
+    KeyPairLocation = ~/.ssh/cyclecloud.pem
+    Azure.Identities = $ManagedServiceIdentity
+    EnableTerminateNotification = True
+    TerminateNotificationTimeout = 10m
+    
+        [[[configuration]]]
+        # For fast spin-up after Deallocate, force an immediate re-converge on boot
+        cuser.base_home_dir = /shared/home
+        cyclecloud.converge_on_boot = true
+        
+        # Disable normal NFS exports and mounts
+        cyclecloud.mounts.sched.disabled = true
+        cyclecloud.mounts.shared.disabled = true
+        cyclecloud.exports.sched.disabled = true
+        cyclecloud.exports.shared.disabled = true
+        cyclecloud.exports.sched.samba.enabled = false
+        cyclecloud.exports.shared.samba.enabled = false
+        cyclecloud.exports.defaults.samba.enabled = false      
+        cshared.server.legacy_links_disabled = true
+        ondemand.auth.AuthType = $AuthType
+        ondemand.auth.oidcAAD.ClientID = $ClientID
+        ondemand.auth.oidcAAD.ClientSecretName = $ClientSecretName
+        ondemand.auth.oidcAAD.MetadataURL = $MetadataURL
+        ondemand.auth.oidcAAD.oidc_scope = $oidc_scope
+        ondemand.auth.oidcAAD.oidc_remote_user_claim = $oidc_remote_user_claim
+        ondemand.auth.oidc_ldap.ldapHost = $ldapHost
+        ondemand.auth.oidc_ldap.bindDN = $bindDN
+        ondemand.auth.oidc_ldap.ldapBindPWName = $ldapBindPWName
+        ondemand.auth.oidc_ldap.userBaseDN = $userBaseDN
+        ondemand.auth.oidc_ldap.userFilter = $userFilter
+        ondemand.auth.oidc_ldap.userName = $userName
+        ondemand.auth.oidc_ldap.idAttribute = $idAttribute
+        ondemand.auth.oidc_ldap.emailAttribute = $emailAttribute
+        ondemand.auth.oidc_ldap.nameAttribute = $nameAttribute
+        ondemand.auth.oidc_ldap.preferredUsernameAttribute = $preferredUsernameAttribute
+        ondemand.auth.oidc_ldap.groupBaseDN = $groupBaseDN
+        ondemand.auth.oidc_ldap.groupFilter = $groupFilter
+        ondemand.auth.oidc_ldap.groupUserMatcherAttribute = $groupUserMatcherAttribute
+        ondemand.auth.oidc_ldap.groupMatcherAttribute = $groupMatcherAttribute
+        ondemand.auth.oidc_ldap.groupNameAttribute = $groupNameAttribute
+        ondemand.auth.oidc_ldap.requiresLDAPCert = $requiresLDAPCert
+        ondemand.auth.oidc_ldap.ldapCertName = $ldapCertName
+        
+        ondemand.ssl.SSLType = $SSLType
+        ondemand.ssl.certificateName = $certificateName
+        ondemand.ssl.certificateKeyName = $certificateKeyName
+        ondemand.portal.ip = $PortalIP
+        ondemand.portal.serverName = $PortalName
+        ondemand.portal.extraConfiguration = $extraConfiguration
+        ondemand.scheduler.type = $schedulerType
+        ondemand.scheduler.host = $schedulerHost
+        ondemand.scheduler.pbsVersion = $pbsSchedulerVersion
+        ondemand.scheduler.slurmVersion = $slurmSchedulerVersion
+        ondemand.scheduler.slurmUID = 11100
+        ondemand.scheduler.slurmGID = 11100
+        ondemand.scheduler.mungeUID = 11101
+        ondemand.scheduler.mungeGID = 11101
+        ondemand.slurmClusterName = $slurmClusterName
+        ondemand.keyVaultName = $AzureKeyVaultName
+
+        #AD server info
+        adauth.ad_domain=$ad_domain
+        adauth.ad_admin_user=$ad_admin_user
+        adauth.ad_admin_password=$ad_admin_passwd
+        adauth.ad_ou=$ad_ou
+
+        dns.servers=$dns_servers
+        dns.search_list=$dns_search_list
+
+        [[[cluster-init cyclecloud/ondemand:default]]]
+        Optional = false
+	[[[cluster-init adauth:default:1.0.0]]]
+
+        [[[configuration cyclecloud.mounts.nfs_shared]]]
+        type = nfs
+        mountpoint = /shared
+        export_path = $NFSSharedExportPath
+        address = $NFSAddress
+        options = $NFSSharedMountOptions
+
+        [[[configuration cyclecloud.mounts.nfs_sched]]]
+        type = nfs
+        mountpoint = /sched
+        export_path = $NFSSchedExportPath
+        address = $NFSSchedAddress
+        options = $NFSSchedMountOptions
+
+        [[[configuration cyclecloud.mounts.additional_nfs]]]
+        disabled = ${AdditionalNAS isnt true}
+        type = nfs
+        address = $AdditonalNFSAddress
+        mountpoint = $AdditionalNFSMountPoint
+        export_path = $AdditionalNFSExportPath
+        options = $AdditionalNFSMountOptions
+
+
+    [[node server]]
+    ImageName = $SchedulerImageName
+    MachineType = $serverMachineType
+    AdditionalClusterInitSpecs = $serverClusterInitSpecs
+    
+        [[[configuration]]]
+        cyclecloud.mounts.nfs_sched.disabled = false
+        cyclecloud.mounts.nfs_shared.disabled = false
+        
+        [[[network-interface eth0]]]
+        AssociatePublicIpAddress = True
+        PrivateIp = $PortalIP
+	PublicIp = $PublicIP
+
+        [[[input-endpoint ganglia]]]
+        PrivatePort = 8652
+        PublicPort = 8652
+
+        [[[volume ood]]]
+        Size = 64
+        SSD = True
+        Mount = ood
+        Persistent = True
+        
+        [[[configuration cyclecloud.mounts.ood]]]
+        disabled = false
+        mountpoint = /ood
+        fs_type = xfs
+
+
+
+[parameters About]
+Order = 1
+
+    [[parameters About Open OnDemand]]
+
+        [[[parameter pbspro]]]
+        HideLabel = true
+        Config.Plugin = pico.widget.HtmlTemplateWidget
+        Config.Template = '''<table role="presentation"> <img width="256" alt="OnDemand logo" src="https://github.com/OSC/openondemand.org/blob/gh-pages/assets/images/ood_logo_stack_rgb.png?raw=true"> </a>  </td></tr> 
+                                <tr> <td> <p>&nbsp;</p> </td></tr> 
+                                <tr> <td> <p>&nbsp;</p> </td></tr> 
+                                <tr><td><big><b>Thank you for using Open On Demand! </big> </b></td></tr> 
+                                <tr><td><p><b>Open OnDemand</b> empowers students, researchers, and industry professionals with remote web access to supercomputers.</p>
+                                         </td></tr> 
+                                         <tr> <td> <p>&nbsp;</p> </td></tr> 
+                                         <tr><td> <p> <big><b><a href=\"https://openondemand.org/\" target=\"_blank\">OnDemand project site</a> for an overview. </big> </b></p></td></tr> 
+                                         <tr><td><ul>
+                                            </ul> </td></tr></table>'''
+
+[parameters Required Settings]
+Order = 10
+
+    [[parameters Virtual Machines ]]
+    Description = "The cluster, in this case, has two roles: the scheduler server-node with shared filer and the execute hosts. Configure which VM types to use based on the requirements of your application."
+    Order = 20
+
+        [[[parameter Region]]]
+        Label = Region
+        Description = Deployment Location
+        ParameterType = Cloud.Region
+
+        [[[parameter serverMachineType]]]
+        Label = Server VM Type
+        Description = The VM type for scheduler server and shared filer.
+        ParameterType = Cloud.MachineType
+        DefaultValue = Standard_D8as_v4
+
+    [[parameters Networking]]
+    Order = 40
+
+        [[[parameter SubnetId]]]
+        Label = Subnet ID
+        Description = Subnet Resource Path (ResourceGroup/VirtualNetwork/Subnet)
+        ParameterType = Azure.Subnet
+        Required = True
+
+[parameters Network Attached Storage]
+Order = 15
+
+
+    [[parameters Scheduler Mount]]
+    Order = 5
+        [[[parameter About sched]]]
+        HideLabel = true
+        Config.Plugin = pico.widget.HtmlTemplateWidget
+        Config.Template = ''' <p>The directory <code>/sched</code> is a network attached mount and exists in all nodes of the cluster. 
+            It's managed by the scheduler node.'''
+        Order = 6
+
+        [[[parameter NFSSchedAddress]]]
+        Label = NFS IP Address
+        Description = The IP address or hostname of the NFS server. Also accepts a list comma-separated addresses, for example, to mount a frontend load-balanced Azure HPC Cache.
+        Config.ParameterType = String
+
+        [[[parameter NFSSchedExportPath]]]
+        Label = Sched Export Path
+        Description = The path exported by the file system
+        DefaultValue = /sched
+
+        [[[parameter NFSSchedMountOptions]]]
+        Label = NFS Mount Options
+        Description = NFS Client Mount Options
+
+
+
+    [[parameters Shared Mount]]
+    Order = 10
+        [[[parameter About shared]]]
+        HideLabel = true
+        Config.Plugin = pico.widget.HtmlTemplateWidget
+        Config.Template := "<p>The directory <code>/shared</code> is a network attached mount and exists in all nodes of the cluster. Users' home directories reside within this mountpoint with the base homedir <code>/shared/home</code>.<br><br></p>"
+        Order = 20
+
+        [[[parameter NFSType]]]
+        Label = NFS Type
+        ParameterType = StringList
+        Config.Label = Type of NFS to use for this cluster
+        Config.Plugin = pico.form.Dropdown
+        Config.Entries := {[Label="External NFS"; Value="External"]}
+        DefaultValue = External
+        Conditions.Hidden := true
+
+        [[[parameter NFSAddress]]]
+        Label = NFS IP Address
+        Description = The IP address or hostname of the NFS server. Also accepts a list comma-separated addresses, for example, to mount a frontend load-balanced Azure HPC Cache.
+        Config.ParameterType = String
+        Conditions.Hidden := NFSType != "External"
+
+        [[[parameter NFSSharedExportPath]]]
+        Label = Shared Export Path
+        Description = The path exported by the file system
+        DefaultValue = /shared
+        Conditions.Hidden := NFSType != "External"
+
+        [[[parameter NFSSharedMountOptions]]]
+        Label = NFS Mount Options
+        Description = NFS Client Mount Options
+        Conditions.Hidden := NFSType != "External"
+
+        [[[parameter FilesystemSize]]]
+        Label = Size (GB)
+        Description = The filesystem size (cannot be changed after initial start)
+        DefaultValue = 100
+
+        Config.Plugin = pico.form.NumberTextBox
+        Config.MinValue = 10
+        Config.MaxValue = 10240
+        Config.IntegerOnly = true
+        Conditions.Excluded := NFSType != "Builtin"
+
+    [[parameters Additional NFS Mount]]
+    Order = 20
+        [[[parameter Additional NFS Mount Readme]]]
+        HideLabel = true
+        Config.Plugin = pico.widget.HtmlTemplateWidget
+        Config.Template := "<p>Mount another NFS endpoint on the cluster nodes.</p>"
+        Order = 20
+
+        [[[parameter AdditionalNAS]]]
+        HideLabel = true
+        DefaultValue = false
+        Widget.Plugin = pico.form.BooleanCheckBox
+        Widget.Label = Add NFS mount
+
+        [[[parameter AdditonalNFSAddress]]]
+        Label = NFS IP Address 
+        Description = The IP address or hostname of the NFS server. Also accepts a list comma-separated addresses, for example, to mount a frontend load-balanced Azure HPC Cache.
+        Config.ParameterType = String
+        Conditions.Excluded := AdditionalNAS isnt true
+
+        [[[parameter AdditionalNFSMountPoint]]]
+        Label = NFS Mount Point
+        Description = The path at which to mount the Filesystem
+        DefaultValue = /data
+        Conditions.Excluded := AdditionalNAS isnt true
+
+        [[[parameter AdditionalNFSExportPath]]]
+        Label = NFS Export Path
+        Description = The path exported by the file system
+        DefaultValue = /data
+        Conditions.Excluded := AdditionalNAS isnt true
+
+        [[[parameter AdditionalNFSMountOptions]]]
+        Label = NFS Mount Options
+        Description = NFS Client Mount Options
+        Conditions.Excluded := AdditionalNAS isnt true
+    
+[parameters OnDemand Portal]
+Order = 17
+
+    [[parameters Portal]]
+        Order = 2
+        [[[parameter PortalIP]]]
+        ParameterType = String
+        Label = Portal IP
+        Description = The private IP address to be assigned to Open OnDemand Potal
+        Required = true
+        Order = 3
+
+        [[[parameter PublicIP]]]
+        ParameterType = String
+        Label = PublicIP Resource Name
+        Description = The resource name of the public IP object
+        Required = true
+        Order = 4
+
+        [[[parameter PortalName]]]
+        ParameterType = String
+        Label = Server Name
+        Description = The OnDemand portal server name, ideally the FQDN
+        Required = true
+        Order = 4
+        
+        [[[parameter extraConfiguration]]]
+        ParameterType = Text
+        Label = Extra configuration
+        Description = Extra configuration to concatenate to OnDemand YML configuration file
+        Order = 5
+
+    [[parameters Secrets Configuration]]
+        Order = 15
+        [[[parameter About Managed Identity]]]
+        HideLabel = true
+        Config.Plugin = pico.widget.HtmlTemplateWidget
+        Config.Template = ''' <p> The Managed Identity will be used during configuration to retrieve secrets from the target Azure Key Vault. 
+            '''
+        Order = 16
+
+        [[[parameter ManagedServiceIdentity]]]
+        ParameterType = Azure.ManagedIdentity
+        Label = MSI Identity
+        Description = The Azure user assigned managed identity to access the Azure Key Vault secret and certificate. Make sure it has 'Get' Permission of the Azure Key vault secret and certificate. The identity will be applied to all nodes.
+        Conditions.Required := AuthType != "basic" || SSLType != "self_signed"
+        Order = 17
+
+        [[[parameter AzureKeyVaultName]]]
+        ParameterType = String
+        Label = Vault Name
+        Description = Azure Vault Name containing the secrets
+        Conditions.Required := AuthType != "basic" || SSLType != "self_signed"
+        Order = 18
+
+
+    [[parameters Authentication]]
+        
+        Order = 19
+        [[[parameter About Authentication]]]
+        HideLabel = true
+        Config.Plugin = pico.widget.HtmlTemplateWidget
+        Config.Template = ''' <p> Authentication for OnDemand portal can be based on Basic Apache auth (using PAM) or on OIDC. In production, it is strongly suggested to avoid Basic authentication.
+            OIDC authentication can bind to a LDAP server through Dex or directly to an OIDC provider. </p>
+            <p>
+            <strong>[Basic]</strong>: basic authentication using PAM. This is unsecure since requires Apache to own <code> /etc/shadow </code>. Moroever, password must be set for user through <code>passwd</code>
+            </p>
+            <p>
+            <strong>[OIDC AD]</strong>: this configuration will enable SSO through an App Registration in Azure AD
+            </p>
+            <p>
+            <strong>[OIDC Dex LDAP]</strong>: DEX will enable an OIDC authentication flow against an LDAP server
+            </p>
+            '''
+        Order = 20
+
+        [[[parameter AuthType]]]
+        Label = Authentication Type
+        ParameterType = StringList
+        Config.Label = Type of authentication to use in the portal
+        Config.Plugin = pico.form.Dropdown
+        Config.Entries := {[Label="Basic"; Value="basic"], [Label="OIDC AD"; Value="oidc_aad"], [Label="OIDC Dex LDAP"; Value="oidc_ldap"]}
+        DefaultValue = basic
+        Order = 21
+
+
+        [[[parameter ClientID]]]
+        Label = Client ID
+        Description = OIDC Application ID in Azure Active Directory
+        DefaultValue = ""
+        Conditions.Excluded := AuthType != "oidc_aad"
+        Conditions.Required :=  AuthType == "oidc_aad"
+        Order = 23
+
+        [[[parameter ClientSecretName]]]
+        Label = Secret Name
+        Description = Client Secret Name in Azure Key Vault
+        DefaultValue = ""
+        Conditions.Excluded := AuthType != "oidc_aad"
+        Conditions.Required := AuthType == "oidc_aad"
+        Order = 24
+
+        [[[parameter MetadataURL]]]
+        Label = Metadata URL
+        Description = Metadata URL
+        DefaultValue = "https://login.microsoftonline.com/{tenant_id}/v2.0/.well-known/openid-configuration"
+        Conditions.Excluded := AuthType != "oidc_aad"
+        Conditions.Required :=  AuthType == "oidc_aad"
+        Order = 25
+
+        [[[parameter oidc_scope]]]
+        Label = OIDC scope
+        Description = OIDC scope
+        DefaultValue = "openid profile email"
+        Conditions.Excluded := AuthType != "oidc_aad"
+        Conditions.Required :=  AuthType == "oidc_aad"
+        Order = 26
+
+        [[[parameter oidc_remote_user_claim]]]
+        Label = OIDC user claim
+        Description = OIDC Remote user claim
+        DefaultValue = "preferred_username"
+        Conditions.Excluded := AuthType != "oidc_aad"
+        Conditions.Required :=  AuthType == "oidc_aad"
+        Order = 27
+        
+        [[[parameter ldapHost]]]
+        Label = LDAPS Host
+        Description = LDAPS host in the form hostname:port
+        DefaultValue = ""
+        Conditions.Excluded := AuthType != "oidc_ldap"
+        Conditions.Required :=  AuthType == "oidc_ldap"
+        Order = 28
+
+        [[[parameter bindDN]]]
+        Label = Bind DN
+        Description = LDAPS read only bind service account 
+        DefaultValue = "cn=read_only_user,dc=example,dc=org"
+        Conditions.Excluded := AuthType != "oidc_ldap"
+        Conditions.Required := AuthType == "oidc_ldap"
+        Order = 29
+
+        [[[parameter ldapBindPWName]]]
+        Label = LDAPS Bind PWD Name
+        Description = Bind account password secret name in Azure Key Vault
+        DefaultValue = ""
+        Conditions.Excluded := AuthType != "oidc_ldap"
+        Conditions.Required := AuthType == "oidc_ldap"
+        Order = 30
+
+
+        [[[parameter userBaseDN]]]
+        Label = User BaseDN
+        DefaultValue = "ou=People,dc=example,dc=org"
+        Conditions.Excluded := AuthType != "oidc_ldap"
+        Conditions.Required := AuthType == "oidc_ldap"
+        Order = 31
+
+        [[[parameter userFilter]]]
+        Label = User Filter
+        DefaultValue = "(objectClass=posixAccount)"
+        Conditions.Excluded := AuthType != "oidc_ldap"
+        Conditions.Required := AuthType == "oidc_ldap"
+        Order = 32
+
+
+        [[[parameter userName]]]
+        Label = Username attribute 
+        DefaultValue = "sAMAccountName"
+        Conditions.Excluded := AuthType != "oidc_ldap"
+        Conditions.Required := AuthType == "oidc_ldap"
+        Order = 33
+
+        
+        [[[parameter idAttribute]]]
+        Label = ID attribute 
+        DefaultValue = "uidNumber"
+        Conditions.Excluded := AuthType != "oidc_ldap"
+        Conditions.Required := AuthType == "oidc_ldap"
+        Order = 34
+
+        [[[parameter emailAttribute]]]
+        Label = Email attribute 
+        DefaultValue = "mail"
+        Conditions.Excluded := AuthType != "oidc_ldap"
+        Conditions.Required := AuthType == "oidc_ldap"
+        Order = 35
+
+        [[[parameter nameAttribute]]]
+        Label = Name Attribute
+        DefaultValue = "givenName"
+        Conditions.Excluded := AuthType != "oidc_ldap"
+        Conditions.Required := AuthType == "oidc_ldap"
+        Order = 36
+
+        [[[parameter preferredUsernameAttribute]]]
+        Label = Preferred Username Attribute
+        DefaultValue = "sAMAccountName"
+        Conditions.Excluded := AuthType != "oidc_ldap"
+        Conditions.Required := AuthType == "oidc_ldap"
+        Order = 37
+
+        [[[parameter groupBaseDN]]]
+        Label = Group BaseDN
+        DefaultValue = "ou=Groups,dc=example,dc=org"
+        Conditions.Excluded := AuthType != "oidc_ldap"
+        Conditions.Required := AuthType == "oidc_ldap"
+        Order = 38
+
+        [[[parameter groupFilter]]]
+        Label = Group Filter
+        DefaultValue = "(objectClass=posixGroup)"
+        Conditions.Excluded := AuthType != "oidc_ldap"
+        Conditions.Required := AuthType == "oidc_ldap"
+        Order = 39
+
+        [[[parameter groupUserMatcherAttribute]]]
+        Label = Group User Matcher Attribute
+        DefaultValue = "DN"
+        Conditions.Excluded := AuthType != "oidc_ldap"
+        Conditions.Required := AuthType == "oidc_ldap"
+        Order = 40
+
+        [[[parameter groupMatcherAttribute]]]
+        Label = Group Matcher Attribute
+        DefaultValue = "member"
+        Conditions.Excluded := AuthType != "oidc_ldap"
+        Conditions.Required := AuthType == "oidc_ldap"
+        Order = 41
+
+        [[[parameter groupNameAttribute]]]
+        Label = Group Name  Attribute
+        DefaultValue = "cn"
+        Conditions.Excluded := AuthType != "oidc_ldap"
+        Conditions.Required := AuthType == "oidc_ldap"
+        Order = 42
+
+        [[[parameter requiresLDAPCert]]]
+        DefaultValue = false
+        Widget.Plugin = pico.form.BooleanCheckBox
+        Widget.Label = Requires LDAP Cert
+        Conditions.Excluded := AuthType != "oidc_ldap"
+        Conditions.Required := AuthType == "oidc_ldap"
+        Order = 43
+
+        [[[parameter ldapCertName]]]
+        Label = LDAP Certificate Name
+        Description = LDAP Certificate Secret name in Azure Key Vault
+        DefaultValue = ""
+        Conditions.Hidden := requiresLDAPCert is false
+        Conditions.Excluded := AuthType != "oidc_ldap"
+        Conditions.Required := requiresLDAPCert isnt false
+        Order = 44
+
+    [[parameters SSL Configuration]]
+        
+        Order = 43
+        [[[parameter About SSL]]]
+        HideLabel = true
+        Config.Plugin = pico.widget.HtmlTemplateWidget
+        Config.Template = ''' <p> Select how to enforce SSL in the portal. The self-signed option can be used for testing, but moving to production, an SSL Cert from a relevant CA must be 
+           configured in the portal and placed in the Azure Key Vault
+            <p>
+            <strong>[Self-Signed]</strong>: A certificate will be generated with a self-generated Certification Authority against the Portal Name specified. This will pop-up unsecure message in browser
+            </p>
+            <p>
+            <strong>[From Azure KeyVault]</strong>: This will pull directly the certificates from the secrets specified in Azure Key Vault
+            </p>
+            '''
+        Order = 44
+
+        [[[parameter SSLType]]]
+        Label = SSL Type
+        ParameterType = StringList
+        Config.Label = Type of SSL to be used for Portal
+        Config.Plugin = pico.form.Dropdown
+        Config.Entries := {[Label="Self-signed"; Value="self_signed"], [Label="From Azure Key Vault"; Value="keyvault"]}
+        DefaultValue = self_signed
+        Order = 45
+
+        [[[parameter certificateName]]]
+        Label = Certificate Name
+        Description = Certificate name in Azure Key Vault
+        DefaultValue = ""
+        Conditions.Excluded := SSLType == "self_signed"
+        Conditions.Required := SSLType != "self_signed"
+        Order = 46
+        
+        [[[parameter certificateKeyName]]]
+        Label = Certificate Key Name
+        Description = Certificate key name in Azure Key Vault
+        DefaultValue = ""
+        Conditions.Excluded := SSLType == "self_signed"
+        Conditions.Required := SSLType != "self_signed"
+        Order = 47
+
+[parameters Scheduler]
+Order = 18
+
+    [[parameters Scheduler Definition]]
+        Order = 10
+        [[[parameter schedulerType]]]
+        Label = Scheduler Type
+        ParameterType = StringList
+        Config.Label = Type of the scheduler
+        Config.Plugin = pico.form.Dropdown
+        Config.Entries := {[Label="OpenPBS"; Value="pbs"], [Label="Slurm"; Value="slurm"]}
+        DefaultValue = pbs
+
+        [[[parameter schedulerHost]]]
+        ParameterType = String
+        Label = Scheduler host 
+        Description = Scheduler host
+        Required = true
+        Order = 14
+
+        [[[parameter pbsSchedulerVersion]]]
+        Label = Scheduler Version
+        ParameterType = StringList
+        Config.Label = Version of the scheduler
+        Config.Plugin = pico.form.Dropdown
+        Config.Entries := {[Label="18.1.4 (only el7)"; Value="18.1.4"], [Label="20.0.1 (only el8)"; Value="20.0.1"], [Label="22.05.11 (only el8)"; Value="22.05.11"]}
+        Conditions.Excluded := schedulerType == "slurm"
+        DefaultValue = 18.1.4
+
+        [[[parameter slurmSchedulerVersion]]]
+        Label = Scheduler Version
+        ParameterType = StringList
+        Config.Label = Version of the scheduler
+        Config.Plugin = pico.form.Dropdown
+        Conditions.Excluded := schedulerType == "pbs"
+        Config.Entries := {[Label="22.05.10"; Value="22.05.10"], [Label="23.02.6"; Value="23.02.6"]}
+        DefaultValue = 22.05.10
+
+        [[[parameter slurmClusterName]]]
+        Label = Slurm Cluster Name
+        ParameterType = String
+        Description = Slurm Cluster Name as reported in Azure CycleCloud
+        Conditions.Excluded := schedulerType == "pbs"
+        Conditions.Required := schedulerType == "slurm"
+
+
+[parameters Active Directory for Linux OS]
+        [[parameter ad_domain]]
+        Label = Domain name
+        Description = Name of AD domain (eg: hpc.local).
+        DefaultValue = hpc.local
+        Required = True
+
+        [[parameter ad_admin_user]]
+        Label = AD Admin User
+        Description = User with rights to join computer to the domain.
+        DefaultValue = administrator
+        Required = True
+
+        [[parameter ad_admin_passwd]]
+        Label = AD Admin password
+        ParameterType = Password
+        Description = Password for user with rights to join computer to the domain.
+        DefaultValue = "mypassword@1234"
+        Required = True
+
+        [[parameter ad_ou]]
+        Label = AD OU
+        Description = (optional) OU to place computer objects in
+        DefaultValue = ""
+
+[parameters DNS]
+        [[parameter dns_servers]]
+        Label = DNS servers
+        Description = comma-separated DNS servers list
+        DefaultValue = ""
+
+        [[parameter dns_search_list]]
+        Label = Search list
+        Description = comma-separated DNS search list
+        DefaultValue = ""
+
+[parameters Advanced Settings]
+Order = 20
+
+    [[parameters Azure Settings]]
+    Order = 10 
+
+        [[[parameter Credentials]]]
+        Description = The credentials for the cloud provider
+        ParameterType = Cloud.Credentials
+
+    [[parameters Software]]
+    Description = "Specify the scheduling software, and base OS installed on all nodes, and optionally the cluster-init and chef versions from your locker."
+    Order = 10
+
+
+        [[[parameter SchedulerImageName]]]
+        Label = Scheduler OS
+        ParameterType = Cloud.Image
+        Config.OS = linux
+        DefaultValue = OpenLogic:CentOS-HPC:7_9-gen2:7.9.2022040101
+        Config.Filter := Package in {"OpenLogic:CentOS-HPC:7_9-gen2:7.9.2022040101", "almalinux8"}
+
+        [[[parameter serverClusterInitSpecs]]]
+        Label = Server Cluster-Init
+        DefaultValue = =undefined
+        Description = Cluster init specs to apply to the server node
+        ParameterType = Cloud.ClusterInitSpecs
+
+
+       
