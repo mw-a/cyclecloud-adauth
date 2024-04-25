@@ -88,6 +88,7 @@ Autoscale = false
         [[[cluster-init cyclecloud/ondemand:default]]]
         Optional = false
 	[[[cluster-init adauth:default:1.0.0]]]
+	[[[cluster-init adauth:permanent_mounts:1.0.0]]]
 
         [[[configuration cyclecloud.mounts.nfs_shared]]]
         type = nfs

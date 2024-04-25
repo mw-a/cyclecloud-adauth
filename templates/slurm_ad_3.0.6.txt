@@ -126,7 +126,7 @@ Autoscale = $Autoscale
 
 
         [[[cluster-init cyclecloud/slurm:scheduler:3.0.6]]]
-        [[[cluster-init adauth:scheduler:1.0.0]]]
+        [[[cluster-init adauth:permanent_mounts:1.0.0]]]
 
         [[[network-interface eth0]]]
         AssociatePublicIpAddress = $UsePublicNetwork
