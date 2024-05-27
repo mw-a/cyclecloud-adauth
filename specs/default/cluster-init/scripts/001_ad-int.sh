@@ -45,35 +45,42 @@ n=1
 max_retry=3
 
 while true; do
-logger -s "Domain join on $AD_DOMAIN"
-echo $ADMIN_PASSWORD| realm join ${AD_OU:+--computer-ou} $AD_OU -U $ADMIN_NAME $AD_DOMAIN
+    logger -s "Domain join on $AD_DOMAIN"
+    echo $ADMIN_PASSWORD | adcli join --stdin-password -U $ADMIN_NAME ${AD_OU:+-O} $AD_OU -D $AD_DOMAIN
+    #-S $SITE_DC
 
-if [ ! -f "/etc/sssd/sssd.conf" ]; then
-    if [[ $n -le $max_retry ]]; then
-        logger -s "Failed to domain join the server - Attempt $n/$max_retry:"
-        sleep $delay
-        ((n++))
+    if ! adcli testjoin -D $AD_DOMAIN ; then
+        if [[ $n -le $max_retry ]]; then
+            logger -s "Failed to domain join the server - Attempt $n/$max_retry:"
+            sleep $delay
+            ((n++))
+        else
+            logger -s "Failed to domain join the server after $n attempts."
+            exit 1
+        fi
     else
-        logger -s "Failed to domain join the server after $n attempts."
-        exit 1
+        logger -s "Successfully joined domain $AD_DOMAIN"
+        break
     fi
-else
-    logger -s "Successfully joined domain $AD_DOMAIN"
-    realm list
-    break
-fi
 done
 
-sed -i 's@use_fully_qualified_names.*@use_fully_qualified_names = False@' /etc/sssd/sssd.conf
-sed -i 's@ldap_id_mapping.*@ldap_id_mapping = True@' /etc/sssd/sssd.conf
-sed -i 's@fallback_homedir.*@fallback_homedir = /shared/home/%u@' /etc/sssd/sssd.conf
+cat <<EOF > /etc/sssd/conf.d/ad.conf
+[sssd]
+domains = $AD_DOMAIN
+services = nss, pam
+config_file_version = 2
+
+[nss]
+filter_groups = root
+filter_users = root
+
+[pam]
+
+[domain/$AD_DOMAIN]
+id_provider = ad
+override_homedir = /shared/home/%u
+EOF
+
+chmod 600 /etc/sssd/conf.d/ad.conf
 
 systemctl restart sssd
-systemctl restart sshd
-
-# Check if we are domain joined
-realm list | grep active-directory
-if [ $? -eq 1 ]; then
-    logger -s "Node $(hostname) is not domain joined"
-    exit 1
-fi
