@@ -82,7 +82,6 @@ Autoscale = false
         adauth.ad_admin_password=$ad_admin_passwd
         adauth.ad_ou=$ad_ou
 
-        dns.servers=$dns_servers
         dns.search_list=$dns_search_list
 
         [[[cluster-init cyclecloud/ondemand:default]]]
@@ -668,11 +667,6 @@ Order = 18
         DefaultValue = ""
 
 [parameters DNS]
-        [[parameter dns_servers]]
-        Label = DNS servers
-        Description = comma-separated DNS servers list
-        DefaultValue = ""
-
         [[parameter dns_search_list]]
         Label = Search list
         Description = comma-separated DNS search list
