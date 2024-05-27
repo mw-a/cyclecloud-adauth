@@ -14,6 +14,8 @@ if [ -z "$AD_DOMAIN" ] ; then
 	exit 0
 fi
 
+#SITE_DC=$(/mnt/cluster-init/adauth/default/files/site_info.py -D $AD_DOMAIN --eager | head -1)
+
 #removing AD server IP incase used in standalone DNS
 #sed -i "/$AD_SERVER_IP/d" /etc/hosts
 
