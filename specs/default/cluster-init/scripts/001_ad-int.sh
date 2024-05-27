@@ -10,6 +10,10 @@ AD_OU=$(jetpack config adauth.ad_ou)
 ADMIN_NAME=$(jetpack config adauth.ad_admin_user)
 ADMIN_PASSWORD=$(jetpack config adauth.ad_admin_password)
 
+if [ -z "$AD_DOMAIN" ] ; then
+	exit 0
+fi
+
 #removing AD server IP incase used in standalone DNS
 #sed -i "/$AD_SERVER_IP/d" /etc/hosts
 

@@ -397,8 +397,7 @@ Order = 10
         [[parameter ad_domain]]
         Label = Domain name
         Description = Name of AD domain (eg: hpc.local).
-        DefaultValue = hpc.local
-        Required = True
+        DefaultValue = ""
 
         [[parameter ad_admin_user]]
         Label = AD Admin User
