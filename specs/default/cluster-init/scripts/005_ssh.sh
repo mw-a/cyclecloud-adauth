@@ -1,5 +1,15 @@
 #!/bin/sh
 
+# fix permissions screwed up by cloud-init
+chmod 644 /etc/ssh/ssh_host_*_key.pub
+chgrp ssh_keys /etc/ssh/ssh_host_*_key
+chmod 640 /etc/ssh/ssh_host_*_key
+
+cat <<EOF >/etc/ssh/ssh_config.d/90-hostbased.conf
+HostbasedAuthentication yes
+EnableSSHKeysign yes
+EOF
+
 sed -i -e "s,#HostbasedAuthentication no,HostbasedAuthentication yes," \
 	-e "s/PasswordAuthentication no/PasswordAuthentication yes/g" \
 	/etc/ssh/sshd_config
@@ -9,27 +19,43 @@ systemctl restart sshd
 rm -f /etc/hosts.equiv
 echo "# managed by cyclecloud" > /etc/hosts.equiv
 
-name_base=${HOSTNAME%s}
-[ "$name_base" != "$HOSTNAME" ] || name_base=${HOSTNAME%login-*}
-[ "$name_base" != "$HOSTNAME" ] || name_base=${HOSTNAME%hpc-*}
-search_list=$(jetpack config dns.search_list)
-partitions="hpc login"
-
 hosts=""
-for domain in ${search_list/,/ } ; do
-	cc=vm-hpc2-cyclecloud-p.$domain
-	echo $cc >> /etc/hosts.equiv
-	scheduler=${name_base}scheduler.$domain
-	echo $scheduler >> /etc/hosts.equiv
+for i in $(seq 1 255) ; do
+	echo 10.242.3.$i >> /etc/hosts.equiv
+	hosts="$hosts,10.242.3.$i"
+done
 
-	hosts="$hosts,$cc,$scheduler"
+name=$HOSTNAME
+use_nodename_as_hostname=$(jetpack config slurm.use_nodename_as_hostname 2>/dev/null)
+if [ "$use_nodename_as_hostname" = "True" ] ; then
+       name=$(jetpack config cyclecloud.node.name)
+fi
+name_base=${name%s}
+[ "$name_base" != "$name" ] || name_base=${name%login-*}
+[ "$name_base" != "$name" ] || name_base=${name%hpc-*}
+[ "$name_base" != "$name" ] || name_base=${name%gpu-*}
+[ "$name_base" != "$name" ] || name_base=${name%ood[0-9][0-9]}
+
+search_list=$(jetpack config dns.search_list)
+partitions="hpc login gpu"
+
+for domain in ${search_list/,/ } internal.cloudapp.net ; do
+	cc=vm-hpc2-cyclecloud-p
+	hosts="$hosts,$cc,$cc.$domain"
+
+	scheduler=${name_base}s
+	hosts="$hosts,$scheduler,$scheduler.$domain"
 
 	for partition in $partitions ; do
-		for instance in `seq 1 50` ; do
-			node=${name_base}$partition-$instance.$domain
-			echo $node >> /etc/hosts.equiv
-			hosts="$hosts,$node"
+		for instance in `seq 1 20` ; do
+			node=${name_base}$partition-$instance
+			hosts="$hosts,$node,$node.$domain"
 		done
+	done
+
+	for instance in `seq -w 01 10` ; do
+		node=${name_base}ood$instance
+		hosts="$hosts,$node,$node.$domain"
 	done
 done
 
