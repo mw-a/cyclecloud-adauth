@@ -85,10 +85,11 @@ Autoscale = false
 
         dns.search_list=$dns_search_list
 
+        [[[cluster-init adauth:ood_server_hostname:1.0.0]]]
         [[[cluster-init cyclecloud/ondemand:default]]]
         Optional = false
-	[[[cluster-init adauth:default:1.0.0]]]
-	[[[cluster-init adauth:permanent_mounts:1.0.0]]]
+        [[[cluster-init adauth:default:1.0.0]]]
+        [[[cluster-init adauth:permanent_mounts:1.0.0]]]
 
         [[[configuration cyclecloud.mounts.nfs_shared]]]
         type = nfs
