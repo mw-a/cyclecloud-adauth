@@ -27,6 +27,7 @@ Autoscale = false
         cyclecloud.converge_on_boot = true
         
         # Disable normal NFS exports and mounts
+        cyclecloud.hosts.standalone_dns.enabled = false
         cyclecloud.mounts.sched.disabled = true
         cyclecloud.mounts.shared.disabled = true
         cyclecloud.exports.sched.disabled = true
