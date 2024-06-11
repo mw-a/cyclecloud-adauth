@@ -35,6 +35,7 @@ Autoscale = false
         cyclecloud.exports.shared.samba.enabled = false
         cyclecloud.exports.defaults.samba.enabled = false      
         cshared.server.legacy_links_disabled = true
+        ondemand.repourl = $onDemandVersion
         ondemand.auth.AuthType = $AuthType
         ondemand.auth.oidcAAD.ClientID = $ClientID
         ondemand.auth.oidcAAD.ClientSecretName = $ClientSecretName
@@ -61,7 +62,6 @@ Autoscale = false
         
         ondemand.ssl.SSLType = $SSLType
         ondemand.ssl.certificateName = $certificateName
-        ondemand.ssl.certificateKeyName = $certificateKeyName
         ondemand.portal.ip = $PortalIP
         ondemand.portal.serverName = $PortalName
         ondemand.portal.extraConfiguration = $extraConfiguration
@@ -312,13 +312,6 @@ Order = 17
         Required = true
         Order = 3
 
-        [[[parameter PublicIP]]]
-        ParameterType = String
-        Label = PublicIP Resource Name
-        Description = The resource name of the public IP object
-        Required = true
-        Order = 4
-
         [[[parameter PortalName]]]
         ParameterType = String
         Label = Server Name
@@ -331,6 +324,15 @@ Order = 17
         Label = Extra configuration
         Description = Extra configuration to concatenate to OnDemand YML configuration file
         Order = 5
+    
+    [[[parameter onDemandVersion]]]
+        Label = OnDemand Portal Version
+        ParameterType = StringList
+        Config.Label = Version of the OnDemand portal
+        Condition:Required = true
+        Config.Plugin = pico.form.Dropdown
+        Config.Entries := {[Label="3.0"; Value="https://yum.osc.edu/ondemand/3.0/ondemand-release-web-3.0-1.noarch.rpm"], [Label="3.1 (only el8)"; Value="https://yum.osc.edu/ondemand/3.1/ondemand-release-web-3.1-1.el8.noarch.rpm"]}
+        DefaultValue = "https://yum.osc.edu/ondemand/3.0/ondemand-release-web-3.0-1.noarch.rpm"
 
     [[parameters Secrets Configuration]]
         Order = 15
@@ -588,14 +590,7 @@ Order = 17
         Conditions.Required := SSLType != "self_signed"
         Order = 46
         
-        [[[parameter certificateKeyName]]]
-        Label = Certificate Key Name
-        Description = Certificate key name in Azure Key Vault
-        DefaultValue = ""
-        Conditions.Excluded := SSLType == "self_signed"
-        Conditions.Required := SSLType != "self_signed"
-        Order = 47
-
+        
 [parameters Scheduler]
 Order = 18
 
@@ -631,7 +626,7 @@ Order = 18
         Config.Label = Version of the scheduler
         Config.Plugin = pico.form.Dropdown
         Conditions.Excluded := schedulerType == "pbs"
-        Config.Entries := {[Label="22.05.10"; Value="22.05.10"], [Label="23.02.6"; Value="23.02.6"]}
+        Config.Entries := {[Label="22.05.10"; Value="22.05.10"], [Label="23.02.6"; Value="23.02.6"], [Label="22.05.9"; Value="22.05.9"], [Label="23.02.5"; Value="23.02.5"], [Label="22.05.11"; Value="22.05.11"], [Label="23.02.7"; Value="23.02.7"]}
         DefaultValue = 22.05.10
 
         [[[parameter slurmClusterName]]]
@@ -672,6 +667,7 @@ Order = 18
         Description = comma-separated DNS search list
         DefaultValue = ""
 
+
 [parameters Advanced Settings]
 Order = 20
 
@@ -688,11 +684,11 @@ Order = 20
 
 
         [[[parameter SchedulerImageName]]]
-        Label = Scheduler OS
+        Label = Portal OS
         ParameterType = Cloud.Image
         Config.OS = linux
-        DefaultValue = OpenLogic:CentOS-HPC:7_9-gen2:7.9.2022040101
-        Config.Filter := Package in {"OpenLogic:CentOS-HPC:7_9-gen2:7.9.2022040101", "almalinux8"}
+        DefaultValue = "cycle.image.centos7"
+        Config.Filter := Package in {"cycle.image.centos7", "almalinux8"}
 
         [[[parameter serverClusterInitSpecs]]]
         Label = Server Cluster-Init
