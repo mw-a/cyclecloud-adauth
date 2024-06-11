@@ -102,3 +102,8 @@ fi
 chmod 600 /etc/sssd/conf.d/ad.conf
 
 systemctl restart sssd
+systemctl enable oddjobd
+systemctl restart oddjobd
+
+authselect select -f sssd
+authselect enable-feature with-mkhomedir
