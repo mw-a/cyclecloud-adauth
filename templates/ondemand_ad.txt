@@ -11,7 +11,7 @@ IconUrl = "https://raw.githubusercontent.com/OSC/openondemand.org/gh-pages/asset
 Autoscale = false
 
     [[node defaults]]
-    UsePublicNetwork = True
+    UsePublicNetwork = false
     Credentials = $Credentials    
     ImageName = $ImageName
     SubnetId = $SubnetId
@@ -122,9 +122,8 @@ Autoscale = false
         cyclecloud.mounts.nfs_shared.disabled = false
         
         [[[network-interface eth0]]]
-        AssociatePublicIpAddress = True
+        AssociatePublicIpAddress = false
         PrivateIp = $PortalIP
-	PublicIp = $PublicIP
 
         [[[input-endpoint ganglia]]]
         PrivatePort = 8652
