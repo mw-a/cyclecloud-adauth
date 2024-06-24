@@ -83,6 +83,13 @@ Autoscale = false
         adauth.ad_admin_password=$ad_admin_passwd
         adauth.ad_ou=$ad_ou
 
+        smbmount.enabled = $AdditionalSMB
+        smbmount.sa = $AdditionalSMBStorageAccount
+        smbmount.key = $AdditionalSMBStorageAccountKey
+        smbmount.mountpoint = $AdditionalSMBMountPoint
+        smbmount.fileshare = $AdditionalSMBFileshare
+        smbmount.options = $AdditionalSMBMountOptions
+
         dns.search_list=$dns_search_list
 
         [[[cluster-init adauth:ood_server_hostname:1.0.0]]]
@@ -90,6 +97,7 @@ Autoscale = false
         Optional = false
         [[[cluster-init adauth:default:1.0.0]]]
         [[[cluster-init adauth:permanent_mounts:1.0.0]]]
+        [[[cluster-init adauth:smbmount:1.0.0]]]
 
         [[[configuration cyclecloud.mounts.nfs_shared]]]
         type = nfs
@@ -301,6 +309,48 @@ Order = 15
         Description = NFS Client Mount Options
         Conditions.Excluded := AdditionalNAS isnt true
     
+    [[parameters Additional SMB Mount from Storage Account]]
+    Order = 60
+
+        [[[parameter AdditionalSMB]]]
+        HideLabel = true
+        DefaultValue = false
+        Widget.Plugin = pico.form.BooleanCheckBox
+        Widget.Label = Add SMB Filesystem mount
+
+        [[[Parameter AdditionalSMBStorageAccount]]]
+        ParameterType = Azure.StorageAccount
+        Label = Storage Account
+        Required = True
+        Conditions.Excluded := AdditionalSMB isnt true
+
+        [[[parameter AdditionalSMBStorageAccountKey]]]
+        Label = StorageAccountKey
+        ParameterType = Password
+        Description = Key for accessing the storage account
+        DefaultValue = ""
+        Required = True
+        Conditions.Excluded := AdditionalSMB isnt true
+
+        [[[parameter AdditionalSMBFileshare]]]
+        Label = File Share
+        Description = The file share exported by the Storage Account
+        DefaultValue = fileshare
+        Required = True
+        Conditions.Excluded := AdditionalSMB isnt true
+
+        [[[parameter AdditionalSMBMountPoint]]]
+        Label = Mount Point
+        Description = The path at which to mount the Filesystem
+        DefaultValue = /encrypted
+        Required = True
+        Conditions.Excluded := AdditionalSMB isnt true
+
+        [[[parameter AdditionalSMBMountOptions]]]
+        Label = Mount Options
+        Description = Filesystem Client Mount Options
+        Conditions.Excluded := AdditionalSMB isnt true
+
 [parameters OnDemand Portal]
 Order = 17
 
