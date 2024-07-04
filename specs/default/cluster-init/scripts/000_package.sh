@@ -13,8 +13,6 @@ rhel)
     pkgs="sssd sssd-tools oddjob oddjob-mkhomedir adcli krb5-workstation openldap-clients python3-ldap python3-dns"
     pkgcount=$(echo $pkgs | wc -w)
     [ "$(rpm -qa $pkgs | wc -l )" -eq $pkgcount ] || dnf install -y $pkgs
-    setenforce 0
-    sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
     ;;
 debian)
     export DEBIAN_FRONTEND=noninteractive
