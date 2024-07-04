@@ -91,6 +91,7 @@ filter_users = root
 [domain/$AD_DOMAIN]
 id_provider = ad
 override_homedir = /shared/home/%u
+override_shell = /bin/bash
 EOF
 
 if [ -n "$AD_COMPUTERNAME" ] ; then
