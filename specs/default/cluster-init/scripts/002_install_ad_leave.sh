@@ -1,7 +1,6 @@
 #!/bin/sh -e
 
 mkdir -p /opt/cycle/jetpack/scripts
-cp /mnt/cluster-init/adauth/default/files/site_info.py /opt/cycle/jetpack/scripts
 
 cat >/opt/cycle/jetpack/scripts/onTerminate.sh << EOF
 #!/bin/sh

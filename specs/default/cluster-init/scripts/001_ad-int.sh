@@ -54,28 +54,4 @@ while true; do
     fi
 done
 
-cat <<EOF > /etc/sssd/conf.d/ad.conf
-[sssd]
-domains = $AD_DOMAIN
-services = nss, pam
-config_file_version = 2
-
-[nss]
-filter_groups = root
-filter_users = root
-
-[pam]
-
-[domain/$AD_DOMAIN]
-id_provider = ad
-override_homedir = /shared/home/%u
-EOF
-
-chmod 600 /etc/sssd/conf.d/ad.conf
-
 systemctl restart sssd
-systemctl enable oddjobd
-systemctl restart oddjobd
-
-authselect select -f sssd
-authselect enable-feature with-mkhomedir
