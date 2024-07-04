@@ -14,28 +14,6 @@ if [ -z "$AD_DOMAIN" ] ; then
 	exit 0
 fi
 
-use_nodename_as_hostname=$(jetpack config slurm.use_nodename_as_hostname 2>/dev/null)
-AD_COMPUTERNAME=
-if [ "$use_nodename_as_hostname" = "True" ] ; then
-	AD_COMPUTERNAME=$(jetpack config cyclecloud.node.name)
-
-	# work around 21 char length limit by shortening partition names - make
-	# sure to produce no collisions here when adding new ones
-	AD_COMPUTERNAME=${AD_COMPUTERNAME/hpc-/h}
-	AD_COMPUTERNAME=${AD_COMPUTERNAME/gpu-/g}
-	AD_COMPUTERNAME=${AD_COMPUTERNAME/login-/l}
-fi
-
-if [ -z "$AD_COMPUTERNAME" ] ; then
-	servername=$(jetpack config ondemand.portal.serverName 2>/dev/null)
-
-	if [ -n "$servername" ] ; then
-		AD_COMPUTERNAME=${servername%%.*}
-	fi
-fi
-
-#SITE_DC=$(/mnt/cluster-init/adauth/default/files/site_info.py -D $AD_DOMAIN --eager | head -1)
-
 #removing AD server IP incase used in standalone DNS
 #sed -i "/$AD_SERVER_IP/d" /etc/hosts
 
@@ -58,7 +36,7 @@ max_retry=3
 
 while true; do
     logger -s "Domain join on $AD_DOMAIN"
-    echo $ADMIN_PASSWORD | adcli join --stdin-password -U $ADMIN_NAME ${AD_OU:+-O} $AD_OU ${AD_COMPUTERNAME:+-N} $AD_COMPUTERNAME -D $AD_DOMAIN
+    echo $ADMIN_PASSWORD | adcli join --stdin-password -U $ADMIN_NAME ${AD_OU:+-O} $AD_OU -D $AD_DOMAIN
     #-S $SITE_DC
 
     if ! adcli testjoin -D $AD_DOMAIN ; then
@@ -92,12 +70,6 @@ filter_users = root
 id_provider = ad
 override_homedir = /shared/home/%u
 EOF
-
-if [ -n "$AD_COMPUTERNAME" ] ; then
-	cat <<EOF >> /etc/sssd/conf.d/ad.conf
-ldap_sasl_authid = $AD_COMPUTERNAME\$@${AD_DOMAIN^^*}
-EOF
-fi
 
 chmod 600 /etc/sssd/conf.d/ad.conf
 

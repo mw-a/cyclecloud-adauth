@@ -1,4 +1,0 @@
-/var/log/slurmctld/update_slurm_resources.log {
-    missingok
-    nocreate
-}
