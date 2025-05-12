@@ -1,0 +1,97 @@
+From 9a0970b950c050bfc2c87d97b868388daa29a1df Mon Sep 17 00:00:00 2001
+From: Michael Weiser <michael.weiser@eviden.com>
+Date: Tue, 13 May 2025 15:30:19 +0200
+Subject: [PATCH 2/3] AD parameters
+
+---
+ templates/openpbs.txt | 67 +++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 67 insertions(+)
+
+diff --git a/templates/openpbs.txt b/templates/openpbs.txt
+index dafc42f..70b5a71 100644
+--- a/templates/openpbs.txt
++++ b/templates/openpbs.txt
+@@ -34,6 +34,17 @@ Autoscale = $Autoscale
+         dns.trim_domains=$dns_trim_domains
+         dns.update_reverse_zone_id=$dns_update_reverse_zone_id
+ 
++        #AD server info
++        adauth.ad_join=$ad_join
++        adauth.ad_domain=$ad_domain
++        adauth.ad_admin_user=$ad_admin_user
++        adauth.ad_admin_password=$ad_admin_passwd
++        adauth.ad_ou=$ad_ou
++        adauth.ad_id_mapping=$ad_id_mapping
++        adauth.ad_delegation=$ad_delegation
++        adauth.ad_delegation_account=$ad_delegation_account
++        adauth.ad_delegation_passwd=$ad_delegation_passwd
++
+         # For fast spin-up after Deallocate, force an immediate re-converge on boot
+         cyclecloud.converge_on_boot = true
+ 
+@@ -277,6 +288,62 @@ Order = 10
+         Description = Resource ID of reverse lookup zone for PTR record update
+         DefaultValue = ""
+ 
++    [[parameters Active Directory]]
++        [[[parameter ad_join]]]
++        Label = Join AD?
++        ParameterType = boolean
++        DefaultValue = false
++
++        [[[parameter ad_domain]]]
++        Label = Domain name
++        Description = Name of AD domain (eg: hpc.local).
++        DefaultValue = ""
++        Conditions.Excluded := !ad_join
++
++        [[[parameter ad_admin_user]]]
++        Label = AD Admin User
++        Description = User with rights to join computer to the domain.
++        DefaultValue = administrator
++        Required = True
++        Conditions.Excluded := !ad_join
++
++        [[[parameter ad_admin_passwd]]]
++        Label = AD Admin password
++        ParameterType = Password
++        Description = Password for user with rights to join computer to the domain.
++        DefaultValue = "mypassword@1234"
++        Required = True
++        Conditions.Excluded := !ad_join
++
++        [[[parameter ad_ou]]]
++        Label = AD OU
++        Description = (optional) OU to place computer objects in
++        DefaultValue = ""
++        Conditions.Excluded := !ad_join
++
++        [[[parameter ad_id_mapping]]]
++        Label = AD ID mapping
++        Description = (optional) automatically make all AD users available through sssd ID mapping
++        DefaultValue = true
++        ParameterType = boolean
++        Conditions.Excluded := !ad_join
++
++        [[[parameter ad_delegation]]]
++        Label = Configure AD Kerberos delegation/impersonation?
++        ParameterType = boolean
++        DefaultValue = false
++
++        [[[parameter ad_delegation_account]]]
++        Label = AD Delegation User
++        Description = User with rights to impersonate users for cifs access.
++        Conditions.Excluded := !ad_delegation
++
++        [[[parameter ad_delegation_passwd]]]
++        Label = AD Delegation password
++        ParameterType = Password
++        Description = Password for user with rights to impersonate users for cifs access.
++        Conditions.Excluded := !ad_delegation
++
+ [parameters Network Attached Storage]
+ Order = 15
+ 
+-- 
+2.47.2
+

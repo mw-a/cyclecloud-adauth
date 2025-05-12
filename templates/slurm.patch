@@ -1,0 +1,97 @@
+From b8e5b53d21158864838adcc280aab319a50ce1df Mon Sep 17 00:00:00 2001
+From: Michael Weiser <michael.weiser@gmx.de>
+Date: Thu, 22 Jan 2026 09:38:08 +0100
+Subject: [PATCH] AD parameters
+
+---
+ templates/slurm.txt | 67 +++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 67 insertions(+)
+
+diff --git a/templates/slurm.txt b/templates/slurm.txt
+index 3837527..4981284 100644
+--- a/templates/slurm.txt
++++ b/templates/slurm.txt
+@@ -53,6 +53,17 @@ Autoscale = $Autoscale
+         dns.trim_domains=$dns_trim_domains
+         dns.update_reverse_zone_id=$dns_update_reverse_zone_id
+ 
++        #AD server info
++        adauth.ad_join=$ad_join
++        adauth.ad_domain=$ad_domain
++        adauth.ad_admin_user=$ad_admin_user
++        adauth.ad_admin_password=$ad_admin_passwd
++        adauth.ad_ou=$ad_ou
++        adauth.ad_id_mapping=$ad_id_mapping
++        adauth.ad_delegation=$ad_delegation
++        adauth.ad_delegation_account=$ad_delegation_account
++        adauth.ad_delegation_passwd=$ad_delegation_passwd
++
+         # For fast spin-up after Deallocate, force an immediate re-converge on boot
+         cyclecloud.converge_on_boot = true
+ 
+@@ -516,6 +527,62 @@ Order = 10
+         Description = Resource ID of reverse lookup zone for PTR record update
+         DefaultValue = ""
+ 
++    [[parameters Active Directory]]
++        [[[parameter ad_join]]]
++        Label = Join AD?
++        ParameterType = boolean
++        DefaultValue = false
++
++        [[[parameter ad_domain]]]
++        Label = Domain name
++        Description = Name of AD domain (eg: hpc.local).
++        DefaultValue = ""
++        Conditions.Excluded := !ad_join
++
++        [[[parameter ad_admin_user]]]
++        Label = AD Admin User
++        Description = User with rights to join computer to the domain.
++        DefaultValue = administrator
++        Required = True
++        Conditions.Excluded := !ad_join
++
++        [[[parameter ad_admin_passwd]]]
++        Label = AD Admin password
++        ParameterType = Password
++        Description = Password for user with rights to join computer to the domain.
++        DefaultValue = "mypassword@1234"
++        Required = True
++        Conditions.Excluded := !ad_join
++
++        [[[parameter ad_ou]]]
++        Label = AD OU
++        Description = (optional) OU to place computer objects in
++        DefaultValue = ""
++        Conditions.Excluded := !ad_join
++
++        [[[parameter ad_id_mapping]]]
++        Label = AD ID mapping
++        Description = (optional) automatically make all AD users available through sssd ID mapping
++        DefaultValue = true
++        ParameterType = boolean
++        Conditions.Excluded := !ad_join
++
++        [[[parameter ad_delegation]]]
++        Label = Configure AD Kerberos delegation/impersonation?
++        ParameterType = boolean
++        DefaultValue = false
++
++        [[[parameter ad_delegation_account]]]
++        Label = AD Delegation User
++        Description = User with rights to impersonate users for cifs access.
++        Conditions.Excluded := !ad_delegation
++
++        [[[parameter ad_delegation_passwd]]]
++        Label = AD Delegation password
++        ParameterType = Password
++        Description = Password for user with rights to impersonate users for cifs access.
++        Conditions.Excluded := !ad_delegation
++
+     [[parameters High Availability]]
+     Order = 50
+     Description = "Slurm can be setup in HA mode - where slurmctld is running on two nodes with failover. Note that checking this box will require an external NFS, so any reference to the 'builtin' NFS will be hidden."
+-- 
+2.52.0
+
